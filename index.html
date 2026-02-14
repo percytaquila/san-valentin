@@ -222,6 +222,62 @@
         box-shadow: 0 24px 70px rgba(0, 0, 0, 0.4);
         backdrop-filter: blur(6px);
       }
+
+      .player {
+        width: 100%;
+        margin: 6px 0 14px;
+        padding: 12px 12px 10px;
+        border-radius: 18px;
+        background: rgba(0, 0, 0, 0.22);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        backdrop-filter: blur(6px);
+      }
+
+      .player-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .player-title {
+        font-weight: 900;
+        color: rgba(233, 238, 252, 0.98);
+        font-size: 14px;
+        text-align: left;
+      }
+
+      .playbtn {
+        width: 44px;
+        height: 44px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(239, 74, 90, 0.92);
+        color: #fff;
+        font-weight: 900;
+        cursor: pointer;
+        transition: transform 0.08s ease;
+      }
+      .playbtn:active {
+        transform: scale(0.97);
+      }
+
+      .player-meta {
+        margin-top: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        font-size: 12px;
+        color: rgba(233, 238, 252, 0.9);
+        font-weight: 700;
+      }
+
+      .seek {
+        width: 100%;
+        margin-top: 8px;
+      }
+
       .teamo {
         font-size: 58px;
         line-height: 1;
@@ -357,6 +413,41 @@
         <!-- Vista 3: Final con ramo estilo flat colorido -->
         <section class="view" id="viewFinal">
           <div class="final-card">
+            <!-- Reproductor -->
+            <div class="player" id="player">
+              <div class="player-top">
+                <div class="player-title">🎵 Te dedico esta canción</div>
+
+                <button
+                  class="playbtn"
+                  id="playBtn"
+                  aria-label="Reproducir / Pausar"
+                >
+                  ▶
+                </button>
+              </div>
+
+              <div class="player-meta">
+                <span id="songName">La Constante - EB</span>
+                <span id="timeLabel">0:00 / 0:00</span>
+              </div>
+
+              <input
+                class="seek"
+                id="seek"
+                type="range"
+                min="0"
+                max="100"
+                value="0"
+                step="0.1"
+                aria-label="Barra de progreso"
+              />
+
+              <audio id="loveAudio" preload="auto">
+                <source src="./La constante - EB.mp3" type="audio/mpeg" />
+              </audio>
+            </div>
+
             <div class="teamo">Te amo</div>
             <p class="valen">¡Feliz día de San Valentín mi amor! 💖</p>
 
@@ -1386,6 +1477,55 @@
         for (let i = 0; i < n; i++) setTimeout(createHeart, rand(0, 300));
       }
       startHearts();
+
+      // -------- Reproductor (vista final) --------
+      const audio = document.getElementById("loveAudio");
+      const playBtn = document.getElementById("playBtn");
+      const seek = document.getElementById("seek");
+      const timeLabel = document.getElementById("timeLabel");
+
+      function fmtTime(sec) {
+        if (!isFinite(sec)) return "0:00";
+        const m = Math.floor(sec / 60);
+        const s = Math.floor(sec % 60);
+        return `${m}:${String(s).padStart(2, "0")}`;
+      }
+
+      function setPlayIcon(isPlaying) {
+        playBtn.textContent = isPlaying ? "⏸" : "▶";
+      }
+
+      playBtn.addEventListener("click", () => {
+        if (audio.paused) audio.play();
+        else audio.pause();
+      });
+
+      audio.addEventListener("play", () => setPlayIcon(true));
+      audio.addEventListener("pause", () => setPlayIcon(false));
+
+      audio.addEventListener("loadedmetadata", () => {
+        timeLabel.textContent = `0:00 / ${fmtTime(audio.duration)}`;
+      });
+
+      audio.addEventListener("timeupdate", () => {
+        if (!audio.duration) return;
+        const pct = (audio.currentTime / audio.duration) * 100;
+        seek.value = pct;
+        timeLabel.textContent = `${fmtTime(audio.currentTime)} / ${fmtTime(audio.duration)}`;
+      });
+
+      seek.addEventListener("input", () => {
+        if (!audio.duration) return;
+        audio.currentTime = (seek.value / 100) * audio.duration;
+      });
+
+      // cuando se abre la vista final, opcional: auto-play (en móvil puede bloquearse)
+      const _originalShowFinalView = showFinalView;
+      showFinalView = function () {
+        _originalShowFinalView();
+        // intenta reproducir (si el navegador lo permite)
+        audio.play().catch(() => {});
+      };
     </script>
   </body>
 </html>
